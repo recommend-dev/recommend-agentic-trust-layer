@@ -1,0 +1,920 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Recommend — Claim Checker</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M18.0158%200H5.98415C2.6792%200%200%202.6792%200%205.98415V18.0158C0%2021.3208%202.6792%2024%205.98415%2024H18.0158C21.3208%2024%2024%2021.3208%2024%2018.0158V5.98415C24%202.6792%2021.3208%200%2018.0158%200Z%22%20fill%3D%22black%22%2F%3E%3Cpath%20d%3D%22M16.2024%206.43752C16.1082%206.42984%2016.0218%206.42599%2015.943%206.42599C15.2053%206.42599%2014.4964%206.66997%2013.8145%207.156C13.315%207.5114%2012.9192%208.01665%2012.6272%208.66597V6.59121H8.7236V18.7132L10.7234%2017.4069L12.7233%2018.7132V13.2708C12.754%2012.3775%2012.9154%2011.7262%2013.2055%2011.319C13.4956%2010.9117%2013.849%2010.6524%2014.264%2010.5429C14.6789%2010.4334%2015.0824%2010.3776%2015.4743%2010.3776C15.6472%2010.3776%2015.8028%2010.3815%2015.9449%2010.3892C16.0852%2010.3969%2016.2504%2010.4084%2016.4386%2010.4238V6.4721C16.3752%206.45673%2016.2984%206.44521%2016.2043%206.43752H16.2024Z%22%20fill%3D%22white%22%2F%3E%3C%2Fsvg%3E"/>
+<style>
+ :root{--ink:#0A0A0A;--body:#4a4a46;--grey:#8a8a85;--faint:#a9a9a3;--line:#E6E5E1;--bg:#fff;--panel:#FAFAF8;
+   --accent:#3F4AE6;--soft:#EEF0FE;--good:#1d8a67;--goodsoft:#e9f7f0;--warn:#8a6d1f;--warnsoft:#fbf3e2;
+   --bad:#c8352a;--badsoft:#fbeceb}
+ *{box-sizing:border-box}
+ body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+      color:var(--ink);background:var(--bg);line-height:1.6}
+ .wrap{max-width:920px;margin:0 auto;padding:0 24px}
+ header{border-bottom:1px solid var(--line)}
+ /* center, not baseline — an inline SVG logo has no text baseline to sit on */
+ .top{display:flex;align-items:center;gap:14px;height:60px;max-width:920px;margin:0 auto;padding:0 24px}
+ .brand{height:17px;width:auto;color:var(--ink);display:block}
+ .doctype{font-size:12px;color:var(--grey);font-weight:600;margin-left:auto}
+ .mcplink{background:none;border:1px solid var(--line);color:var(--body);border-radius:7px;
+   padding:5px 12px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+ .mcplink:hover{border-color:var(--accent);color:var(--accent)}
+ .hero{padding:40px 0 28px}
+ .eyebrow{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--accent);margin-bottom:12px}
+ h1{font-size:clamp(26px,4vw,38px);letter-spacing:-.025em;line-height:1.1;margin:0 0 12px}
+ h1 .g{color:var(--accent)}
+ .lead{font-size:17px;color:var(--body);max-width:660px;margin:0}
+ .box{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:16px;margin:22px 0}
+ textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:13px 14px;font:inherit;
+   font-size:16px;color:var(--ink);background:#fff;resize:vertical;min-height:78px;outline:none}
+ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--soft)}
+ .row{display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap}
+ button{background:var(--accent);color:#fff;border:0;border-radius:9px;padding:11px 22px;
+   font:inherit;font-weight:700;font-size:15px;cursor:pointer}
+ button:disabled{background:var(--faint);cursor:not-allowed}
+ .chk{font-size:13.5px;color:var(--body);display:flex;align-items:center;gap:6px;cursor:pointer}
+ .hint{font-size:12.5px;color:var(--faint);margin-left:auto}
+ .ex{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+ .ex b{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);
+   font-weight:800;align-self:center;margin-right:2px}
+ .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:12.5px;
+   color:var(--body);cursor:pointer}
+ .chip:hover{border-color:var(--accent);color:var(--accent)}
+ section{padding:8px 0 26px}
+ .stage{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);
+   margin:26px 0 10px;display:flex;align-items:center;gap:8px}
+ .stage span{color:var(--accent)}
+ .norm{font-size:18px;font-weight:600;letter-spacing:-.01em;margin:0 0 10px}
+ .meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+ .tag{font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+   background:var(--soft);color:var(--accent);border-radius:5px;padding:3px 8px}
+ .sub{font-size:14.5px;color:var(--body);margin:5px 0;padding-left:18px;position:relative}
+ .sub:before{content:"";position:absolute;left:4px;top:10px;width:5px;height:5px;border-radius:50%;background:var(--faint)}
+ .sub.ok:before{background:var(--good)} .sub.no:before{background:var(--bad)}
+ .sub.meh:before{background:var(--warn)}
+ .sub b{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;
+   margin-right:7px;color:var(--grey)}
+ .sub.ok b{color:var(--good)} .sub.no b{color:var(--bad)} .sub.meh b{color:var(--warn)}
+ .subnote{display:block;font-size:12.5px;color:var(--faint);margin-top:1px}
+ .chal{font-size:12px;color:var(--warn);background:var(--warnsoft);border-radius:6px;
+   padding:6px 9px;margin-top:8px;line-height:1.4}
+ .qs{font-size:12.5px;color:var(--grey);margin-top:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+ .lanes{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:10px}
+ .lane{border:1px solid var(--line);border-radius:12px;padding:13px 14px;background:#fff;
+   transition:box-shadow .2s,border-color .2s}
+ .lane.run{border-color:var(--accent);box-shadow:0 0 0 3px var(--soft)}
+ .lane .ln{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px}
+ .lane .st{font-size:12px;color:var(--grey);margin-top:5px}
+ .lane .sm{font-size:13px;color:var(--body);margin-top:8px;line-height:1.45}
+ .lane .bar{height:4px;border-radius:3px;background:var(--line);margin-top:9px;overflow:hidden}
+ .lane .bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .4s}
+ .dot{width:7px;height:7px;border-radius:50%;background:var(--faint);flex:none}
+ .dot.run{background:var(--accent);animation:pulse 1s infinite}
+ .dot.support{background:var(--good)}.dot.refute{background:var(--bad)}
+ .dot.mixed,.dot.insufficient{background:var(--warn)}
+ @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+ .verdict{border:1px solid var(--line);border-left:4px solid var(--faint);border-radius:0 14px 14px 0;
+   padding:20px 24px;background:var(--panel)}
+ .verdict.good{border-left-color:var(--good);background:var(--goodsoft)}
+ .verdict.warn{border-left-color:var(--warn);background:var(--warnsoft)}
+ .verdict.bad{border-left-color:var(--bad);background:var(--badsoft)}
+ .qstatus{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+ .qstatus b{font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+   border-radius:5px;padding:3px 9px;background:var(--ink);color:#fff;flex:none}
+ .qstatus span{font-size:13px;color:var(--body)}
+ .qstatus.settled b{background:var(--good)}
+ .qstatus.open b{background:var(--accent)}
+ .qstatus.contested b{background:var(--warn)}
+ .qstatus.opinion b{background:var(--grey)}
+ .vl{font-size:27px;font-weight:800;letter-spacing:-.02em;margin:0}
+ .vprelim{font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--warn);
+   background:#fff;border-radius:5px;padding:3px 8px;margin-left:10px;vertical-align:middle}
+ .conf{display:flex;align-items:center;gap:14px;margin:14px 0 8px}
+ .cbar{flex:1;height:9px;border-radius:5px;background:#fff;border:1px solid var(--line);overflow:hidden}
+ .cbar i{display:block;height:100%;background:var(--accent);width:0;transition:width .6s}
+ .cval{font-size:21px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+ .clab{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--grey)}
+ .rat{font-size:14px;color:var(--body);margin:8px 0 0}
+ #s-verdict.pending .vl, #s-verdict.pending .qstatus, #s-verdict.pending .scorebar,
+ #s-verdict.pending .scorehint, #s-verdict.pending .conf, #s-verdict.pending .rat,
+ #s-verdict.pending .foot, #s-verdict.pending .btnrow, #s-verdict.pending .note-un{display:none}
+ #s-verdict.pending .verdict{background:var(--panel);border-left-color:var(--line)}
+ .scalewrap{display:flex;flex-direction:column;align-items:center;margin:12px 0 4px}
+ .gauge{width:290px;height:180px}
+ .gauge .track{fill:none;stroke:var(--line);stroke-width:12;stroke-linecap:round}
+ /* half-circle at r=98 → length π·98 ≈ 308; we reveal it up to the score */
+ .gauge .arc{fill:none;stroke:var(--ink);stroke-width:12;stroke-linecap:round;
+   stroke-dasharray:308;stroke-dashoffset:308;transition:stroke-dashoffset 1s cubic-bezier(.22,1.12,.36,1)}
+ .gauge .scan{fill:none;stroke:var(--accent);stroke-width:12;stroke-linecap:round;
+   stroke-dasharray:34 274;animation:sweep 1.5s ease-in-out infinite}
+ @keyframes sweep{0%{stroke-dashoffset:308}100%{stroke-dashoffset:0}}
+ .gauge .ticks line{stroke:var(--faint);stroke-width:2;stroke-linecap:round;opacity:.5}
+ .gauge .needle polygon{fill:var(--ink)}
+ .gauge .needle{transform-origin:150px 148px;transform:rotate(-90deg);
+   transition:transform 1s cubic-bezier(.22,1.12,.36,1)}
+ .gauge .hub{fill:#fff;stroke:var(--line);stroke-width:2}
+ .gauge .gl{font-size:10px;font-weight:800;letter-spacing:.11em;text-anchor:middle}
+ .gauge .gl{fill:var(--faint)}
+ .ticker{font-size:13px;color:var(--grey);min-height:20px;margin-top:2px;
+   display:flex;align-items:center;gap:8px;transition:opacity .25s}
+ .ticker.out{opacity:0}
+ .ticker i{width:6px;height:6px;border-radius:50%;background:var(--accent);
+   animation:pulse 1s infinite;flex:none}
+ .readout{font-size:15.5px;line-height:1.6;color:var(--ink);margin:16px 0 4px;
+   max-width:640px}
+ .readout:after{content:"▌";color:var(--accent);animation:pulse .9s infinite}
+ .readout.done:after{content:""}
+ .scorebar{display:flex;align-items:center;gap:14px;margin:16px 0 4px}
+ .sline{flex:1;height:11px;border-radius:6px;background:#fff;border:1px solid var(--line);
+   position:relative;overflow:hidden}
+ .sline i{display:block;height:100%;width:0;transition:width .6s}
+ .sline b{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--faint);opacity:.6}
+ .scorehint{font-size:11.5px;color:var(--faint);margin:0 0 4px}
+ .note-un{font-size:13.5px;color:var(--warn);background:#fff;border-radius:8px;
+   padding:9px 12px;margin:10px 0 0;border-left:3px solid var(--warn)}
+ .btnrow{display:flex;gap:10px;flex-wrap:wrap}
+ .mini{display:inline-block;width:11px;height:11px;margin-right:7px;vertical-align:-1px;
+   border:2px solid var(--soft);border-top-color:var(--accent);border-radius:50%;
+   animation:spin .7s linear infinite}
+ @keyframes spin{to{transform:rotate(360deg)}}
+ .trow.flash{animation:flash 1.6s ease-out}
+ @keyframes flash{0%{background:var(--soft)}100%{background:transparent}}
+ .trow{border-top:1px solid var(--line);padding:13px 0;display:flex;align-items:center;gap:14px}
+ .trow .tc{flex:1;font-size:14.5px;font-weight:600}
+ .trow .tl{font-size:11.5px;color:var(--grey);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+ .tsc{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+ .tdelta{font-size:12.5px;font-weight:800;font-variant-numeric:tabular-nums;min-width:46px}
+ .tdelta.up{color:var(--good)}.tdelta.down{color:var(--bad)}.tdelta.flat{color:var(--faint)}
+ .spark{display:flex;align-items:flex-end;gap:2px;height:26px;width:90px}
+ .spark i{flex:1;background:var(--soft);border-radius:1px;min-height:2px}
+ .spark i.last{background:var(--accent)}
+ .tbtn{border:1px solid var(--line);background:#fff;border-radius:7px;padding:4px 10px;
+   font:inherit;font-size:12px;color:var(--body);cursor:pointer}
+ .tbtn:hover{border-color:var(--accent);color:var(--accent)}
+ .foot{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--grey);margin-top:14px;
+   padding-top:12px;border-top:1px solid rgba(0,0,0,.07)}
+ .src{border-top:1px solid var(--line);padding:11px 0}
+ .src a{color:var(--ink);text-decoration:none;font-size:14.5px;font-weight:600}
+ .src a:hover{color:var(--accent)}
+ .src .d{font-size:12px;color:var(--accent);font-weight:700}
+ .src .e{font-size:13px;color:var(--grey);margin-top:3px}
+ .err{border-left:3px solid var(--bad);background:var(--badsoft);padding:12px 16px;border-radius:0 10px 10px 0;
+   font-size:14px;color:var(--bad)}
+ /* utility — must beat any later display rule (e.g. .modal{display:flex}) */
+ .hidden{display:none !important}
+ .cmpbtn{background:#fff;color:var(--accent);border:1px solid var(--accent);border-radius:9px;
+   padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer;margin-top:16px}
+ .cmpbtn:hover{background:var(--soft)}
+ .modal{position:fixed;inset:0;background:rgba(10,10,10,.45);display:flex;align-items:flex-start;
+   justify-content:center;padding:40px 20px;overflow-y:auto;z-index:50}
+ .sheet{background:#fff;border-radius:16px;max-width:880px;width:100%;padding:28px 32px 32px;
+   box-shadow:0 24px 60px rgba(0,0,0,.22)}
+ .sheet h3{font-size:22px;letter-spacing:-.02em;margin:0}
+ .sheet .x{float:right;border:0;background:none;color:var(--grey);font-size:26px;line-height:1;
+   cursor:pointer;padding:0 0 0 12px}
+ .sheetsub{font-size:14.5px;color:var(--body);margin:8px 0 20px;max-width:640px}
+ .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+ .col{border:1px solid var(--line);border-radius:12px;padding:15px}
+ .col.ours{border-color:var(--accent);background:var(--soft)}
+ .col .cn{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--grey)}
+ .col.ours .cn{color:var(--accent)}
+ .col .cv{font-size:19px;font-weight:800;letter-spacing:-.02em;margin:7px 0 2px;text-transform:uppercase}
+ .col .cc{font-size:12.5px;color:var(--grey)}
+ .col .ca{font-size:13px;color:var(--body);margin-top:10px;line-height:1.5}
+ .col .grounded{font-size:11.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+   margin-top:10px;display:inline-block;padding:2px 7px;border-radius:5px}
+ .g-no{background:#f0f0ee;color:#777}.g-yes{background:var(--goodsoft);color:var(--good)}
+ .flag{font-size:12px;font-weight:700;margin-top:9px}
+ .flag.bad{color:var(--bad)}.flag.good{color:var(--good)}
+ .verdicthead{font-size:19px;font-weight:800;letter-spacing:-.02em;margin:22px 0 4px}
+ .verdicthead span{color:var(--accent)}
+ .weighsub{font-size:13.5px;color:var(--body);margin:0 0 12px}
+ .wtab{width:100%;border-collapse:collapse;font-size:13.5px}
+ .wtab th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;
+   color:var(--grey);padding:0 10px 7px;font-weight:800;border-bottom:1px solid var(--line)}
+ .wtab th:nth-child(3){color:var(--accent)}
+ .wtab td{padding:9px 10px;border-top:1px solid var(--line);vertical-align:top}
+ .wtab td:first-child{padding-left:0;color:var(--grey);font-weight:600;width:31%}
+ .wtab td.them{color:var(--body)}
+ .wtab td.us{color:var(--ink);font-weight:600;background:var(--soft)}
+ .insight{border-left:3px solid var(--accent);background:var(--soft);border-radius:0 10px 10px 0;
+   padding:15px 18px;margin-top:20px;font-size:14.5px;color:var(--body)}
+ .keymiss{border-left:3px solid var(--warn);background:var(--warnsoft);border-radius:0 10px 10px 0;
+   padding:13px 16px;margin-top:14px;font-size:13.5px;color:var(--warn)}
+ .spin{font-size:13px;color:var(--grey)}
+ .kv{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:7px 0;font-size:14px}
+ .kv .k{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
+   color:var(--grey);width:74px;flex:none}
+ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;background:#fff;
+   border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:var(--accent);word-break:break-all}
+ .demo{font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+   background:var(--warnsoft);color:var(--warn);border-radius:5px;padding:2px 7px}
+ .step{border-top:1px solid var(--line);padding:13px 0;position:relative}
+ .step.moat{border-left:3px solid var(--accent);background:var(--soft);
+   border-radius:0 10px 10px 0;padding:13px 16px;margin:0 0 2px}
+ .moatbadge{font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+   background:var(--accent);color:#fff;border-radius:4px;padding:2px 7px;margin-left:9px;
+   vertical-align:2px}
+ .step b{font-size:13px;font-weight:800;color:var(--accent);letter-spacing:.01em}
+ .step p{font-size:14px;color:var(--body);margin:5px 0 0;line-height:1.55}
+ .cmd{margin-top:14px}
+ .cmdlab{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
+   color:var(--grey);margin-bottom:5px}
+ pre{background:var(--ink);color:#e8e8e4;border-radius:9px;padding:13px 15px;margin:0;
+   font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.55;
+   overflow-x:auto;white-space:pre}
+ .fine{font-size:12.5px;color:var(--faint);margin-top:12px}
+ .fine code{font-size:11.5px;padding:1px 5px}
+ footer{padding:34px 0 70px;color:var(--faint);font-size:12.5px;border-top:1px solid var(--line);margin-top:34px}
+ /* ── cards, meters, chips ─────────────────────────────────────────────────── */
+ .modebar{display:flex;justify-content:center;margin:30px 0 4px}
+ .modesw{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:4px;gap:3px}
+ .mseg{background:none;border:0;border-radius:8px;padding:9px 22px;font:inherit;font-size:14px;font-weight:700;color:var(--grey);cursor:pointer}
+ .mseg.on{background:#fff;color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+ .crow{display:flex;gap:10px}
+ .crow input{flex:1;border:1px solid var(--line);border-radius:10px;padding:13px 14px;font:inherit;font-size:16px;color:var(--ink);background:#fff;outline:none}
+ .crow input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--soft)}
+ .ptitle{font-size:14px;font-weight:700;margin:26px 0 12px}
+ .cand{border:1px solid var(--line);border-radius:12px;background:#fff;padding:13px 15px;margin-bottom:9px;cursor:pointer;transition:.12s;display:flex;gap:12px;align-items:flex-start}
+ .cand:hover{border-color:var(--accent);background:var(--soft)}
+ .cand b{font-size:15px}
+ .cand .meta{font-size:12.5px;color:var(--grey);margin-top:2px}
+ .cand .why{font-size:12.5px;color:var(--body);margin-top:5px}
+ .cand .pickar{margin-left:auto;color:var(--accent);font-weight:700;white-space:nowrap;align-self:center}
+ .pf{padding:16px 18px}
+ .pf h3{margin:0 0 4px;font-size:16px}
+ .pf .what{color:var(--body);font-size:14px;margin:0 0 12px}
+ .pf .grid{display:flex;flex-wrap:wrap;gap:8px 26px;font-size:13px}
+ .pf .grid div{color:var(--body)} .pf .grid b{color:var(--ink)}
+ .pf .tags{margin-top:12px;display:flex;flex-wrap:wrap;gap:6px}
+ .pf .tag{font-size:12px;background:var(--soft);color:var(--accent);border-radius:20px;padding:3px 10px}
+ .pf .risks{margin-top:10px;font-size:12.5px;color:var(--body)}
+ .cstat{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--body);margin:18px 0;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 15px}
+ .cspin{width:13px;height:13px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:cspin .7s linear infinite}
+ @keyframes cspin{to{transform:rotate(360deg)}}
+ /* verdict card */
+ .cv{border:1px solid var(--line);border-radius:16px;background:var(--panel);padding:22px 24px;margin:24px 0}
+ .cv-top{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+ .cv-score{font-size:58px;font-weight:800;letter-spacing:-.03em;line-height:1}
+ .cv-score small{font-size:22px;color:var(--grey);font-weight:700}
+ .cv-band{font-size:19px;font-weight:800} .cv-verdict{font-size:14px;color:var(--body);margin-top:2px}
+ .cv-conf{margin-top:8px;font-size:12.5px;color:var(--grey)}
+ .cv-meter{height:6px;width:170px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:6px}
+ .cv-meter i{display:block;height:100%;background:var(--accent)}
+ .tone-good{color:var(--good)} .tone-ok{color:var(--accent)} .tone-warn{color:var(--warn)} .tone-bad{color:var(--bad)}
+ .bar-good{background:var(--good)!important} .bar-ok{background:var(--accent)!important} .bar-warn{background:var(--warn)!important} .bar-bad{background:var(--bad)!important}
+ .cv-reason{font-size:15px;line-height:1.6;margin:18px 0 0;color:var(--ink)}
+ .cv-sec-t{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--grey);margin:20px 0 9px}
+ .wt{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:13px}
+ .wt .wn{width:190px;color:var(--ink);font-weight:600} .wt .wb{flex:1;height:7px;background:var(--line);border-radius:4px;overflow:hidden}
+ .wt .wb i{display:block;height:100%;background:var(--accent)} .wt .wp{width:38px;text-align:right;color:var(--body);font-weight:700} .wt .ww{color:var(--grey);font-size:12px;width:150px}
+ .watch{margin:6px 0 0;padding-left:18px;font-size:13.5px;color:var(--body)} .watch li{margin:3px 0}
+ /* signal cards */
+ .sig{border:1px solid var(--line);border-radius:12px;background:#fff;padding:13px 16px;margin-bottom:10px}
+ .sig.pending{opacity:.5}
+ .sig-h{display:flex;align-items:center;gap:12px}
+ .sig-n{font-weight:700;font-size:14px;flex:1} .sig-s{font-weight:800;font-size:18px;min-width:44px;text-align:right}
+ .sig-bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin:9px 0 6px} .sig-bar i{display:block;height:100%}
+ .sig-c{font-size:12px;color:var(--grey)} .sig-r{font-size:13.5px;color:var(--body);margin-top:8px;line-height:1.5}
+ .sig-fl{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap} .sig-fl span{font-size:11.5px;background:var(--badsoft);color:var(--bad);border:1px solid #f2d3d0;border-radius:6px;padding:2px 8px}
+ .sig-cl{margin-top:9px;font-size:12.5px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 10px}
+ .sig-cl .tt{font-weight:700} .sig-cl .cf{cursor:pointer;color:var(--accent);font-weight:700}
+ .sig-srct{font-size:12.5px;color:var(--accent);cursor:pointer;margin-top:9px;display:inline-block}
+ .sig-src{display:none;margin-top:8px;border-top:1px dashed var(--line);padding-top:8px} .sig-src.show{display:block}
+ .sig-src .s{font-size:12.5px;margin:5px 0;line-height:1.4} .sig-src .s a{color:var(--accent);text-decoration:none}
+ .verified{color:var(--good);font-weight:700} .unverified{color:var(--warn);font-weight:700}
+ .cchip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:12.5px;color:var(--body);cursor:pointer}
+ .cchip:hover{border-color:var(--accent);color:var(--accent)}
+</style></head><body>
+<header><div class="top">
+  <!-- official `recommend` wordmark -->
+  <svg class="brand" viewBox="0 0 712 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="recommend">
+   <path d="M46.0386 26.2411V45.854H40.5049C28.485 45.854 21.5678 51.7911 21.5678 65.1948V98.3474L10.7839 91.2773L0 98.3474V27.0683H21.0122V40.3247C24.0512 31.4871 30.6848 25.9579 41.3327 25.9579C42.9882 25.9579 44.5077 26.0938 46.0272 26.2298L46.0386 26.2411Z"/>
+   <path d="M45.7629 62.7002C45.7629 40.1869 60.2775 25.4121 82.5257 25.4121C104.774 25.4121 119.289 40.7421 119.289 64.7737V69.0566H66.4916C68.0111 79.4125 74.3726 84.1146 82.7979 84.1146C89.8511 84.1146 94.6817 81.214 97.1764 76.104H117.633C113.766 91.0261 99.9433 99.9997 82.7979 99.9997C60.6858 99.9997 45.7516 85.3609 45.7516 62.7116L45.7629 62.7002ZM98.2877 55.3808C96.7682 46.5432 91.0984 41.2972 82.2536 41.2972C74.3726 41.2972 68.2946 45.5801 66.639 55.3808H98.2877Z"/>
+   <path d="M123.042 62.7002C123.042 40.0509 137.285 25.4121 159.669 25.4121C179.298 25.4121 192.565 36.3232 194.504 53.8626H173.084C171.836 46.2713 166.586 42.9515 159.681 42.9515C150.564 42.9515 144.894 49.0245 144.894 62.7002C144.894 76.376 150.7 82.3131 159.681 82.3131C166.87 82.3131 172.54 78.7213 173.503 70.2916H194.924C193.404 88.658 179.445 99.9884 159.681 99.9884C137.421 99.9884 123.054 85.3496 123.054 62.7002H123.042Z"/>
+   <path d="M197.267 62.7002C197.267 40.0509 211.918 25.4121 234.722 25.4121C257.525 25.4121 272.04 40.0509 272.04 62.7002C272.04 85.3496 257.389 99.9884 234.722 99.9884C212.054 99.9884 197.267 85.3496 197.267 62.7002ZM250.211 62.7002C250.211 49.1605 244.269 42.6682 234.733 42.6682C225.196 42.6682 219.118 49.1605 219.118 62.7002C219.118 76.24 225.06 82.7323 234.733 82.7323C244.406 82.7323 250.211 76.24 250.211 62.7002Z"/>
+   <path d="M452.951 25.4072C468.293 25.4072 477.967 34.936 477.967 52.0674V98.3408H456.398V55.7949C456.398 48.0565 453.359 43.7736 445.751 43.7734C439.253 43.7734 433.447 48.0567 433.447 58.9678V98.3291H411.88V55.7949C411.88 48.0564 408.84 43.7734 401.231 43.7734C395.029 43.7735 389.334 47.6761 388.829 57.5205V98.3408H367.262V55.7949C367.262 48.0565 364.223 43.7736 356.614 43.7734C350.117 43.7734 344.31 48.0567 344.31 58.9678V98.3291H322.743V55.7949C322.743 48.0564 319.703 43.7734 312.095 43.7734C305.597 43.7735 299.655 48.0567 299.655 58.9678V98.3291H278.088V27.0615H299.099V37.1455C303.658 30.3814 310.019 25.4073 319.42 25.4072C329.784 25.4072 337.665 29.9621 341.532 38.2559C346.374 31.0724 353.972 25.4072 363.792 25.4072C374.859 25.4073 382.975 30.3663 386.64 39.5605L386.638 39.502C391.786 31.1969 399.18 25.4072 408.58 25.4072C418.944 25.4074 426.825 29.9622 430.691 38.2559C435.533 31.0725 443.131 25.4073 452.951 25.4072Z"/>
+   <path d="M484.067 62.7002C484.067 40.1869 498.581 25.4121 520.83 25.4121C543.078 25.4121 557.592 40.7421 557.592 64.7737V69.0566H504.795C506.315 79.4125 512.676 84.1146 521.102 84.1146C528.155 84.1146 532.986 81.214 535.48 76.104H555.937C552.07 91.0261 538.247 99.9997 521.102 99.9997C498.99 99.9997 484.055 85.3609 484.055 62.7116L484.067 62.7002ZM536.592 55.3808C535.072 46.5432 529.402 41.2972 520.557 41.2972C512.676 41.2972 506.598 45.5801 504.943 55.3808H536.592Z"/>
+   <path d="M632.373 51.6532V98.3341H610.805V55.936C610.805 48.0614 607.347 43.7786 599.329 43.7786C592.696 43.7786 585.779 48.0614 585.779 58.5533V98.3341H564.211V27.0663H585.223V37.1503C589.918 30.5221 597.243 25.4121 607.619 25.4121C621.714 25.4121 632.362 33.9778 632.362 51.6532H632.373Z"/>
+   <path d="M690.432 0H712V98.336H690.988V89.0791C686.43 95.8433 679.512 99.9902 669.568 99.9902C650.211 99.9902 638.463 85.3514 638.463 62.7021C638.463 40.0527 650.211 25.4139 669.568 25.4139C679.104 25.4139 685.874 29.2776 690.444 35.6339V0H690.432ZM690.852 62.7021C690.852 49.1623 685.182 42.67 675.51 42.67C665.837 42.67 660.303 49.7175 660.303 63.2459C660.303 76.7744 665.973 82.7228 675.51 82.7228C685.046 82.7228 690.852 76.2305 690.852 62.6907V62.7021Z"/>
+  </svg>
+  <span class="doctype">PoC · trust layer</span>
+  <button class="mcplink" id="howopen">How it works</button>
+  <button class="mcplink" id="mcpopen">Connect via MCP</button></div></header>
+
+<div class="wrap">
+ <div id="mode-claim">
+ <div class="hero">
+  <div class="eyebrow">The trust layer, live</div>
+  <h1>Every AI will hand you an answer.<br/>We tell you <span class="g">what it's worth.</span></h1>
+  <p class="lead">Retrieval is the easy part. We take the claim apart into the assertions it stands on,
+   weigh independent bodies of evidence against each other, <b>attack every conclusion before accepting
+   it</b>, and return a score from 0 to 100 with a confidence that falls when the evidence is thin,
+   stale, or argues with itself. You get the reasoning and the sources, not just a verdict.</p>
+ </div>
+
+ <div class="box">
+  <textarea id="claim" placeholder="e.g. Norway sells more electric cars than petrol cars"></textarea>
+  <div class="row">
+   <button id="go">Check claim</button>
+   <label class="chk"><input type="checkbox" id="deep" checked/> include deep research lane (slower)</label>
+   <span class="hint" id="timer"></span>
+  </div>
+  <div class="ex"><b>try</b>
+   <span class="chip">Norway sells more electric cars than petrol cars</span>
+   <span class="chip">Electric cars produce less CO2 over their lifetime than petrol cars</span>
+   <span class="chip">Portugal decriminalised the possession of all drugs</span>
+   <span class="chip">Nuclear power causes more deaths per unit of energy than coal</span>
+   <span class="chip">Sugar makes children hyperactive</span>
+   <span class="chip">Humans only use 10 percent of their brains</span>
+   <span class="chip">The Great Wall of China is visible from space with the naked eye</span>
+   <span class="chip">Croatia adopted the euro in 2023</span>
+  </div>
+ </div>
+
+ <div id="err" class="err hidden"></div>
+
+<section id="s-verdict" class="hidden">
+  <div class="verdict" id="verdict">
+   <div class="qstatus hidden" id="qstatus"><b id="qslab"></b><span id="qsnote"></span></div>
+   <h2 class="vl"><span id="vlabel"></span><span id="vprelim" class="vprelim hidden">PRELIMINARY</span></h2>
+   <div class="scalewrap">
+    <svg class="gauge" id="gauge" viewBox="0 0 300 186" aria-hidden="true">
+     <defs>
+
+     </defs>
+     <path class="track" d="M52 148 A 98 98 0 0 1 248 148"/>
+     <path class="arc" id="arc" d="M52 148 A 98 98 0 0 1 248 148"/>
+     <path class="scan hidden" id="scan" d="M52 148 A 98 98 0 0 1 248 148"/>
+     <g class="ticks">
+      <line x1="150" y1="38" x2="150" y2="50"/>
+      <line x1="81" y1="79" x2="90" y2="87"/><line x1="219" y1="79" x2="210" y2="87"/>
+     </g>
+     <g id="needle" class="needle">
+      <polygon points="148,150 150,58 152,150"/>
+     </g>
+     <circle class="hub" cx="150" cy="148" r="20"/>
+     <g transform="translate(138,136)">
+      <path d="M18.0158 0H5.98415C2.6792 0 0 2.6792 0 5.98415V18.0158C0 21.3208 2.6792 24 5.98415 24H18.0158C21.3208 24 24 21.3208 24 18.0158V5.98415C24 2.6792 21.3208 0 18.0158 0Z" fill="#0A0A0A"/>
+      <path d="M16.2024 6.43752C16.1082 6.42984 16.0218 6.42599 15.943 6.42599C15.2053 6.42599 14.4964 6.66997 13.8145 7.156C13.315 7.5114 12.9192 8.01665 12.6272 8.66597V6.59121H8.7236V18.7132L10.7234 17.4069L12.7233 18.7132V13.2708C12.754 12.3775 12.9154 11.7262 13.2055 11.319C13.4956 10.9117 13.849 10.6524 14.264 10.5429C14.6789 10.4334 15.0824 10.3776 15.4743 10.3776C15.6472 10.3776 15.8028 10.3815 15.9449 10.3892C16.0852 10.3969 16.2504 10.4084 16.4386 10.4238V6.4721C16.3752 6.45673 16.2984 6.44521 16.2043 6.43752H16.2024Z" fill="#fff"/>
+     </g>
+     <text x="46" y="176" class="gl f">FALSE</text>
+     <text x="254" y="176" class="gl t">TRUE</text>
+    </svg>
+    <div class="ticker" id="ticker"></div>
+   </div>
+   <p class="readout hidden" id="readout"></p>
+   <div class="scorebar">
+    <span class="clab">Truth score</span>
+    <div class="sline"><i id="sfill"></i><b id="smid"></b></div>
+    <span class="cval" id="sval"></span>
+   </div>
+   <p class="scorehint">0 = evidence says false · 50 = genuinely unsettled · 100 = evidence says true</p>
+   <p class="note-un hidden" id="vnote"></p>
+   <p class="note-un hidden" id="vconcern"></p>
+   <div class="conf">
+    <span class="clab">Confidence</span>
+    <div class="cbar"><i id="cfill"></i></div>
+    <span class="cval" id="cval"></span>
+   </div>
+   <p class="rat" id="rat"></p>
+   <div class="foot" id="vfoot"></div>
+  </div>
+  <div class="btnrow">
+   <button class="cmpbtn" id="cmpbtn">Compare with the raw model →</button>
+   <button class="cmpbtn" id="trackbtn"
+    title="Adds this claim to your watchlist. We re-check it every 24h and show the daily move in its score, so you can see the answer change as reality does.">Track this daily</button>
+   <button class="cmpbtn" id="reasonbtn">Show the reasoning ↓</button>
+  </div>
+ </section>
+
+ <div id="reasoning" class="hidden">
+<section id="s-struct" class="hidden">
+  <div class="stage">Structured</div>
+  <p class="norm" id="norm"></p>
+  <div class="meta" id="tags"></div>
+  <div id="subs"></div>
+  <div class="qs" id="queries"></div>
+ </section>
+<section id="s-lanes" class="hidden">
+  <div class="stage">Evidence lanes <span id="lanecount" style="color:var(--faint)"></span></div>
+  <div class="lanes" id="lanes"></div>
+ </section>
+<section id="s-src" class="hidden">
+  <div class="stage">Sources</div>
+  <div id="sources"></div>
+ </section>
+ </div>
+
+ 
+ 
+ 
+ <div class="modal hidden" id="modal">
+  <div class="sheet">
+   <button class="x" id="mx">&times;</button>
+   <h3>Same claim, asked blind</h3>
+   <p class="sheetsub">The same claim, answered by the raw model from memory alone — no search,
+    no sources — reporting its own confidence. Ours is beside it, grounded in what it actually read.</p>
+   <div class="cols" id="cols"></div>
+   <div id="weigh"></div>
+   <div id="insight"></div>
+  </div>
+ </div>
+
+ 
+ <section id="s-track" class="hidden">
+  <div class="stage">Tracked in this session <span id="tcount" style="color:var(--faint)"></span></div>
+  <div id="tracked"></div>
+ </section>
+
+ </div><!-- /mode-claim -->
+
+ <div class="modal hidden" id="howmodal">
+  <div class="sheet">
+   <button class="x" id="howx">&times;</button>
+   <h3>How it works</h3>
+   <p class="sheetsub">A claim goes in, six stages run, a score and a confidence come out.
+    Nothing is answered from model memory — every judgement is made against text we fetched
+    for that specific claim. The three marked stages are where the work is ours: retrieval is a
+    commodity anyone can rent, but adjudicating conflicting evidence and knowing what the answer
+    is worth is not.</p>
+
+   <div class="step"><b>1 · Structure</b>
+    <p>The claim is rewritten as one precise, falsifiable sentence and broken into the atomic
+    assertions that must all hold. We also classify it — factual, statistical, causal, predictive
+    or opinion — because that determines how far evidence can take us.</p></div>
+
+   <div class="step"><b>2 · Query the live web, in parallel</b>
+    <p>We generate several different search angles for the same claim, including one written
+    specifically to surface <i>contradicting</i> evidence, then crawl and read the open web across
+    four independent retrieval lanes at once — a grounded-answer lane, a semantic lane, a live
+    search index and a deep-research lane. They run simultaneously, so breadth costs seconds,
+    not minutes. Then the claim's type decides what else gets asked: a claim about the future also
+    goes to live prediction markets, where a share price is a probability with real money behind it,
+    and a claim about cause-and-effect or population statistics goes to the peer-reviewed literature,
+    weighted by how much the field actually cites each study. Firing every source at every claim is
+    slower and noisier — knowing which authority settles which kind of question is the point.</p></div>
+
+   <div class="step moat"><b>3 · Judge each lane on its own evidence</b><span class="moatbadge">Defensible</span>
+    <p>Every lane is scored in isolation, strictly against the pages that lane actually fetched,
+    with background knowledge explicitly forbidden. Each judge reports a stance, a probability, and
+    how decisive its evidence really is — and must name which sources it leaned on, so weak or
+    off-topic pages stop inflating the source count.</p></div>
+
+   <div class="step moat"><b>4 · Aggregate, and let disagreement cost you</b><span class="moatbadge">Defensible</span>
+    <p>Lanes are combined weighted by how decisive each one was. When independent lanes land on
+    opposite sides, confidence drops — that spread is the honest signal that the question is open.
+    A lane that came back empty stays in the denominator, so silence lowers the score instead of
+    quietly disappearing.</p></div>
+
+   <div class="step moat"><b>5 · Calibration review</b><span class="moatbadge">Defensible</span>
+    <p>A final adversarial pass asks whether the verdict is really carried by its evidence, or only
+    by evidence that is adjacent to the claim. It is a one-way ratchet: it can lower confidence,
+    never raise it. Claims about the future or matters of opinion are capped here — absence of
+    reporting is not proof of absence.</p></div>
+
+   <div class="step"><b>6 · Score, and keep watching</b>
+    <p>The output is a truth score from 0 to 100 — above 50 leans true — plus a separate confidence
+    saying how much to trust that score at all, and the sources behind it. Claims that aren't settled
+    today can be pinned and re-checked daily, so you see the score move as reality does.</p></div>
+
+   <div class="step"><b>“But a model is still doing the judging — why trust that?”</b>
+    <p>The fair objection, and the reason the architecture looks the way it does. Asking a model to
+    <i>recall</i> a fact is where hallucination lives: it answers from compressed memory with no way
+    to know whether it knows. Asking it whether <i>this specific text</i> supports <i>this specific
+    claim</i> is reading comprehension over material placed in front of it — a far more reliable task,
+    and one you can audit yourself by opening the sources. On top of that we never rely on a single
+    read: several lanes see different evidence, each conclusion is attacked before it is accepted, and
+    disagreement between them lowers the score automatically. The confidence number is the part we are
+    hardening next — fitting it against outcomes we have observed, rather than asking a model how sure
+    it feels.</p></div>
+
+   <p class="fine">Every check is logged with its full reasoning trace, which becomes the training
+    corpus for improving the judging over time.</p>
+  </div>
+ </div>
+
+ <div class="modal hidden" id="mcpmodal">
+  <div class="sheet">
+   <button class="x" id="mcpx">&times;</button>
+   <h3>Connect any LLM agent</h3>
+   <p class="sheetsub">This whole check is exposed as one MCP tool — <code>verify_claim</code>.
+    Any agent (Claude, Cursor, your own) can call it and get back the verdict, the confidence,
+    the per-lane breakdown and the sources. Access is <b>key-gated</b>: it only answers to a key
+    we issue.</p>
+   <div class="kv"><span class="k">Endpoint</span><code id="mcp-url">…</code></div>
+   <div class="kv"><span class="k">Key</span><code id="mcp-key">…</code>
+     <span class="demo">demo key · visible for the PoC only</span></div>
+   <div class="kv"><span class="k">Tool</span><code id="mcp-tool">…</code></div>
+   <div class="cmd">
+    <div class="cmdlab">Claude Code</div>
+    <pre id="mcp-cli">…</pre>
+   </div>
+   <div class="cmd">
+    <div class="cmdlab">Any MCP client (JSON config)</div>
+    <pre id="mcp-json">…</pre>
+   </div>
+   <p class="fine">Transport: streamable HTTP (JSON-RPC over <code>POST /mcp</code>),
+    <code>Authorization: Bearer &lt;key&gt;</code>. Without a valid key every call returns 401.</p>
+  </div>
+ </div>
+
+ <footer>Four independent evidence lanes — Grounded Web, Semantic Web, Live Index and Deep Research —
+  queried in parallel. Each lane is scored only against the evidence it actually fetched, never against
+  model memory.</footer>
+</div>
+
+<script>
+// Every request is relative to where this page is mounted, so the app works both at
+// localhost:8899/ and behind a reverse-proxy path prefix like /confidence-check/.
+const BASE = location.pathname.endsWith('/') ? location.pathname : location.pathname + '/';
+const $ = id => document.getElementById(id);
+const esc = s => (s||"").replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let es = null, t0 = 0, tick = null, allSources = [], finished = false, laneAcc = [];
+
+// score 0-100 → needle angle (-90° at 0, +90° at 100) and how much of the arc is filled
+function tiltTo(score) {
+  const sc = Math.max(0, Math.min(100, score));
+  $('needle').style.transform = `rotate(${(-90 + sc * 1.8).toFixed(2)}deg)`;
+  $('arc').style.strokeDashoffset = (308 * (1 - sc / 100)).toFixed(1);
+}
+
+// one short line under the gauge, so the wait never looks like a hang
+let tickerT = null;
+function say(msg) {
+  const el = $('ticker');
+  if (!msg) { el.innerHTML = ''; return; }
+  el.classList.add('out');
+  clearTimeout(tickerT);
+  tickerT = setTimeout(() => {
+    el.innerHTML = `<i></i><span>${esc(msg)}</span>`;
+    el.classList.remove('out');
+  }, 180);
+}
+
+// the readout types itself in — it is the one part a person actually reads
+let typeT = null;
+function typeOut(text) {
+  clearInterval(typeT);
+  const el = $('readout');
+  el.classList.remove('hidden', 'done');
+  el.textContent = '';
+  let i = 0;
+  typeT = setInterval(() => {
+    el.textContent = text.slice(0, i += 2);
+    if (i >= text.length) { clearInterval(typeT); el.classList.add('done'); }
+  }, 12);
+}
+
+document.querySelectorAll('.chip').forEach(c =>
+  c.onclick = () => { $('claim').value = c.textContent; run(); });
+$('go').onclick = run;
+$('claim').onkeydown = e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) run(); };
+
+function reset() {
+  ['s-struct','s-lanes','s-verdict','s-src'].forEach(i => $(i).classList.add('hidden'));
+  $('err').classList.add('hidden'); $('lanes').innerHTML = ''; $('sources').innerHTML = '';
+  $('vprelim').classList.add('hidden'); allSources = [];
+  $('readout').classList.add('hidden'); clearInterval(typeT); say('');
+}
+
+function run() {
+  const claim = $('claim').value.trim();
+  if (!claim) return;
+  if (es) es.close();
+  reset();
+  $('scan').classList.remove('hidden');            // sweep the arc while work is in flight
+  say('Structuring the claim…');
+  finished = false; lastVerdict = null; lastClaim = claim;
+  $('go').disabled = true; $('go').textContent = 'Checking…';
+  t0 = Date.now();
+  clearInterval(tick);
+  tick = setInterval(() => $('timer').textContent = ((Date.now()-t0)/1000).toFixed(1) + 's', 100);
+
+  es = new EventSource(BASE + 'api/check?claim=' + encodeURIComponent(claim) + '&deep=' + ($('deep').checked ? 1 : 0));
+
+  es.addEventListener('status', e => say(JSON.parse(e.data).msg));
+
+  es.addEventListener('summary', e => typeOut(JSON.parse(e.data).text));
+
+  es.addEventListener('structured', e => {
+    const d = JSON.parse(e.data);
+    $('s-struct').classList.remove('hidden');
+    $('norm').textContent = d.normalized;
+    $('tags').innerHTML = `<span class="tag">${esc(d.claim_type)}</span>` +
+      (d.checkable ? '' : `<span class="tag" style="background:var(--warnsoft);color:var(--warn)">not falsifiable</span>`) +
+      (d.entities||[]).map(x => `<span class="tag" style="background:#f0f0ee;color:#666">${esc(x)}</span>`).join('');
+    $('subs').innerHTML = (d.subclaims||[]).map(s => `<div class="sub">${esc(s)}</div>`).join('') +
+      (d.checkable_note ? `<div class="sub" style="color:var(--warn)">${esc(d.checkable_note)}</div>` : '');
+    $('queries').textContent = (d.queries||[]).map(q => '→ ' + q).join('\n');
+  });
+
+  es.addEventListener('lanes', e => {
+    const d = JSON.parse(e.data);
+    $('s-lanes').classList.remove('hidden');
+    $('s-verdict').classList.remove('hidden');     // show the scale weighing straight away
+    $('s-verdict').classList.add('pending');       // ...but nothing else until there IS a verdict
+    laneAcc = [];
+    tiltTo(50);                                     // start centred, then lean as evidence lands
+    say(`Querying ${d.lanes.length} independent sources in parallel…`);
+    $('lanecount').textContent = `— ${d.lanes.length} pinged simultaneously`;
+    $('lanes').innerHTML = d.lanes.map(l => `
+      <div class="lane run" id="lane-${l.id}">
+        <div class="ln"><span class="dot run"></span>${esc(l.name)}</div>
+        <div class="st">querying…</div>
+        <div class="bar"><i></i></div>
+      </div>`).join('');
+  });
+
+  es.addEventListener('lane_done', e => {
+    const d = JSON.parse(e.data);
+    const node = $('lane-' + (d.lane || d.id));
+    if (!node) return;
+    node.classList.remove('run');
+    if (d.error) {
+      node.querySelector('.dot').className = 'dot';
+      node.querySelector('.st').innerHTML = `<span style="color:var(--bad)">failed</span> · ${d.ms}ms`;
+      node.querySelector('.bar i').style.width = '0';
+      return;
+    }
+    node.querySelector('.dot').className = 'dot ' + d.stance;
+    node.querySelector('.st').textContent =
+      `${d.stance} · ${d.sources.length} sources · ${(d.ms/1000).toFixed(1)}s`;
+    node.querySelector('.bar i').style.width = Math.round(d.strength*100) + '%';
+    node.insertAdjacentHTML('beforeend', `<div class="sm">${esc(d.summary)}</div>` +
+      (d.challenge ? `<div class="chal">Challenged: ${esc(d.challenge)}</div>` : ''));
+    // every lane that lands nudges the scale — a running, strength-weighted estimate
+    if (d.strength > 0.05 && d.stance !== 'insufficient') {
+      laneAcc.push({p: d.p_true, w: d.strength});
+      const sw = laneAcc.reduce((a, x) => a + x.w, 0);
+      tiltTo((laneAcc.reduce((a, x) => a + x.p * x.w, 0) / sw) * 100);
+    }
+    say(`${d.name} returned — ${d.sources.length} sources, ${d.stance}`);
+    allSources.push(...d.sources);
+    renderSources();
+  });
+
+  es.addEventListener('subclaims', e => {
+    const rs = JSON.parse(e.data).results || [];
+    if (!rs.length) return;
+    $('subs').innerHTML = rs.map(r => {
+      const cls = r.verdict === 'supported' ? 'ok' : r.verdict === 'refuted' ? 'no' : 'meh';
+      return `<div class="sub ${cls}"><b>${r.verdict}</b> ${esc(r.subclaim)}` +
+             (r.note ? `<span class="subnote">${esc(r.note)}</span>` : '') + `</div>`;
+    }).join('');
+  });
+
+  es.addEventListener('verdict', e => {
+    const d = JSON.parse(e.data);
+    $('s-verdict').classList.remove('hidden');
+    $('verdict').className = 'verdict ' + d.tone;
+    $('vlabel').textContent = d.label;
+    $('vprelim').classList.toggle('hidden', !d.preliminary);
+    $('cfill').style.width = Math.round(d.confidence*100) + '%';
+    $('cval').textContent = Math.round(d.confidence*100) + '%';
+    $('rat').textContent = d.rationale;
+    lastVerdict = d;                            // the modal contrasts blind LLMs against this
+
+    const sc = d.score != null ? d.score : 50;
+    if (!d.preliminary) {
+      $('s-verdict').classList.remove('pending');
+      tiltTo(sc);
+    }
+    $('sfill').style.width = sc + '%';
+    $('sfill').style.background = sc >= 60 ? 'var(--good)' : sc <= 40 ? 'var(--bad)' : 'var(--warn)';
+    $('sval').textContent = sc;
+    const SL = {settled:'Settled question', open:'Open question',
+                contested:'Contested', opinion:'Not falsifiable', unknown:'Unclear'};
+    $('qstatus').className = 'qstatus ' + (d.status || 'unknown');
+    $('qstatus').classList.toggle('hidden', !d.status);
+    $('qslab').textContent = SL[d.status] || d.status || '';
+    $('qsnote').textContent = d.status_note || '';
+
+    $('vnote').textContent = d.note || '';
+    $('vnote').classList.toggle('hidden', !d.note);
+    $('vconcern').textContent = d.concern ? 'Calibration flag: ' + d.concern : '';
+    $('vconcern').classList.toggle('hidden', !d.concern);
+    $('vfoot').innerHTML = [
+      `P(true) ${d.p_true}`,
+      d.elapsed != null ? `${d.elapsed}s elapsed` : '',
+      d.n_sources ? `${d.n_sources} sources read` : '',
+      d.n_cited ? `${d.n_cited} load-bearing` : ''
+      // API cost is deliberately not surfaced — it anchors the client on our margins
+    ].filter(Boolean).map(x => `<span>${x}</span>`).join('');
+  });
+
+  es.addEventListener('error', e => {
+    // a verdict already on screen means the run succeeded; a late socket close is not
+    // something to alarm the user about
+    if (finished || (lastVerdict && !lastVerdict.preliminary)) { stop(); return; }
+    let m = 'Stream error — is server.py still running?';
+    try { m = JSON.parse(e.data).msg; } catch (_) {}
+    $('err').textContent = m; $('err').classList.remove('hidden');
+    $('scan').classList.add('hidden'); stop();
+  });
+  es.addEventListener('done', () => {
+    finished = true; say(''); $('scan').classList.add('hidden'); stop();
+  });
+  es.onerror = () => { if (finished) stop(); };
+}
+
+function renderSources() {
+  const seen = new Set(), out = [];
+  for (const s of allSources) {
+    if (!s.url || seen.has(s.url)) continue;
+    seen.add(s.url);
+    out.push(`<div class="src"><div class="d">${esc(s.dom)}</div>
+      <a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)}</a>
+      ${s.excerpt ? `<div class="e">${esc(s.excerpt)}…</div>` : ''}</div>`);
+  }
+  $('s-src').classList.toggle('hidden', !out.length);
+  $('sources').innerHTML = out.join('');
+}
+
+// ── comparison modal: blind LLMs vs our grounded verdict ──────────────────────
+let lastVerdict = null, lastClaim = '', ces = null;
+
+// both modals share the same open/close behaviour: X, backdrop click, Escape
+const MODALS = ['modal', 'mcpmodal', 'howmodal'];
+const closeModals = () => MODALS.forEach(m => $(m).classList.add('hidden'));
+MODALS.forEach(m => {
+  $(m).onclick = e => { if (e.target === $(m)) closeModals(); };
+});
+$('mx').onclick = closeModals;
+$('mcpx').onclick = closeModals;
+$('mcpopen').onclick = () => $('mcpmodal').classList.remove('hidden');
+$('howx').onclick = closeModals;
+$('howopen').onclick = () => $('howmodal').classList.remove('hidden');
+$('cmpbtn').onclick = openCompare;
+$('reasonbtn').onclick = () => {
+  const open = $('reasoning').classList.toggle('hidden');
+  $('reasonbtn').textContent = open ? 'Show the reasoning ↓' : 'Hide the reasoning ↑';
+  if (!open) $('reasoning').scrollIntoView({behavior: 'smooth', block: 'start'});
+};
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModals(); });
+
+function openCompare() {
+  if (!lastVerdict) return;
+  $('modal').classList.remove('hidden');
+  $('insight').innerHTML = '';
+  $('cols').innerHTML = `
+    <div class="col" id="m-gemini"><div class="cn">Gemini · blind</div><div class="spin">asking…</div></div>
+    <div class="col ours">
+      <div class="cn">recommend · grounded</div>
+      <div class="cv">${esc(lastVerdict.label)}</div>
+      <div class="cc">${Math.round(lastVerdict.confidence*100)}% calibrated confidence</div>
+      <div class="ca">${esc(lastVerdict.rationale)}</div>
+      <span class="grounded g-yes">${lastVerdict.n_sources || 0} sources read</span>
+    </div>`;
+
+  if (ces) ces.close();
+  ces = new EventSource(BASE + 'api/compare?claim=' + encodeURIComponent(lastClaim) +
+    '&p_true=' + lastVerdict.p_true + '&conf=' + lastVerdict.confidence +
+    '&label=' + encodeURIComponent(lastVerdict.label) + '&n_sources=' + (lastVerdict.n_sources || 0));
+
+  ces.addEventListener('model_done', e => {
+    const d = JSON.parse(e.data), node = $('m-' + d.id);
+    if (!node) return;
+    if (d.error) {
+      node.innerHTML = `<div class="cn">${esc(d.name)}</div>` +
+        `<div class="flag bad" style="margin-top:8px">failed: ${esc(d.error)}</div>`;
+      return;
+    }
+    node.innerHTML = `<div class="cn">${esc(d.name)}</div>
+      <div class="cv">${esc(d.verdict)}</div>
+      <div class="cc">${Math.round(d.confidence*100)}% self-reported · ${(d.ms/1000).toFixed(1)}s</div>
+      <div class="ca">${esc(d.answer)}</div>
+      <span class="grounded g-no">0 sources</span>`;
+  });
+
+  ces.addEventListener('delta', e => {
+    const d = JSON.parse(e.data);
+    d.rows.forEach(r => {
+      const node = $('m-' + r.id);
+      if (!node) return;
+      node.insertAdjacentHTML('beforeend',
+        `<div class="flag ${r.agrees ? 'good' : 'bad'}">${r.agrees
+          ? '✓ matches the evidence' : '✕ contradicts the evidence'}` +
+        (r.overconfidence > 0.15
+          ? ` · overconfident by ${Math.round(r.overconfidence*100)} pts` : '') + `</div>`);
+    });
+    renderWeight(d);
+    $('insight').innerHTML = `<div class="insight">${esc(d.insight)}</div>`;
+  });
+
+  ces.addEventListener('done', () => ces.close());
+
+  // The point of this panel: when the blind model AGREES, the answer is not the
+  // differentiator — everything backing the answer is.
+  function renderWeight(d) {
+    const v = lastVerdict || {}, m = (d.rows || [])[0];
+    if (!m) return;
+    const subs = (v.subclaims || []).length;
+    const rows = [
+      ['Verdict', esc(m.verdict), esc(v.label)],
+      ['Confidence',
+       `${Math.round(m.claimed*100)}% — self-reported, unverifiable`,
+       `${Math.round((v.confidence||0)*100)}% — calibrated, falls when lanes disagree`],
+      ['Sources you can open', 'none',
+       `${v.n_sources || 0} read, ${v.n_cited || 0} load-bearing`],
+      ['Independent evidence lanes', 'none — one pass from memory',
+       `${v.lanes_total || 0} queried in parallel, judged separately`],
+      ['Sub-claims verified', 'none', subs ? `${subs} checked individually` : 'none for this claim'],
+      ['Adversarial review', 'none',
+       'every lane attacked; weight cut where it broke'],
+      ['If the facts change', 'frozen at training time',
+       're-checked live, trackable daily'],
+      ['If it were wrong', 'sounds exactly this certain',
+       'confidence drops and says why'],
+    ];
+    $('weigh').innerHTML =
+      `<h4 class="verdicthead">${m.agrees ? 'Same verdict. <span>Not the same evidence.</span>'
+                                          : 'Different verdict — <span>and only one of them is checkable.</span>'}</h4>
+       <p class="weighsub">${m.agrees
+          ? 'Agreement is not the product. Anyone can produce this answer; the question is whether you can check it, and what happens on the claim where the model is wrong.'
+          : 'The blind model contradicts what the sources actually say.'}</p>
+       <table class="wtab"><tr><th></th><th>Raw model, blind</th><th>recommend, grounded</th></tr>
+       ${rows.map(r => `<tr><td>${r[0]}</td><td class="them">${r[1]}</td><td class="us">${r[2]}</td></tr>`).join('')}
+       </table>`;
+  }
+  ces.addEventListener('error', () => ces.close());
+}
+
+// ── daily tracking, scoped to this browser session ────────────────────────────
+let sid = localStorage.getItem('rcmnd_sid');
+if (!sid) { sid = 's_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+            localStorage.setItem('rcmnd_sid', sid); }
+
+$('trackbtn').onclick = () => {
+  if (!lastVerdict) return;
+  $('trackbtn').disabled = true;
+  $('trackbtn').innerHTML = '<span class="mini"></span>Adding to watchlist…';
+  api('/api/track/add', {claim: lastClaim, score: lastVerdict.score,
+                         conf: lastVerdict.confidence, label: lastVerdict.label})
+    .then(() => {
+      // the watchlist is at the bottom of the page — take the user to what just changed
+      $('s-track').scrollIntoView({behavior: 'smooth', block: 'center'});
+      const row = $('tracked').querySelector('.trow');
+      if (row) { row.classList.add('flash'); setTimeout(() => row.classList.remove('flash'), 1600); }
+    })
+    .finally(() => { $('trackbtn').disabled = false;
+                     $('trackbtn').textContent = 'Track this daily'; });
+};
+
+function api(path, params = {}) {
+  const q = new URLSearchParams({sid, ...params});
+  return fetch(BASE + path.replace(/^\//,'') + '?' + q).then(r => r.json()).then(d => { renderTracked(d.tracked); return d; });
+}
+
+function renderTracked(items) {
+  if (!items) return;
+  $('s-track').classList.toggle('hidden', !items.length);
+  $('tcount').textContent = items.length ? `— re-checked daily, ${items.length} claim${items.length>1?'s':''}` : '';
+  $('tracked').innerHTML = items.map(t => {
+    const d = t.delta, dc = d == null ? 'flat' : d > 0 ? 'up' : d < 0 ? 'down' : 'flat';
+    const dt = d == null ? '—' : (d > 0 ? '+' : '') + d;
+    const hs = t.history.map((p, i) =>
+      `<i class="${i === t.history.length-1 ? 'last' : ''}" style="height:${Math.max(2, p.score)}%"></i>`).join('');
+    return `<div class="trow">
+      <div class="spark">${hs}</div>
+      <div class="tc">${esc(t.claim)}<div class="tl">${esc(t.label || '')} · ${t.checks} check${t.checks>1?'s':''}</div></div>
+      <span class="tdelta ${dc}" title="change since previous check">${dt}</span>
+      <span class="tsc">${t.score != null ? t.score : '—'}</span>
+      <button class="tbtn" data-recheck="${esc(t.claim)}">Re-check</button>
+      <button class="tbtn" data-untrack="${esc(t.claim)}">✕</button>
+    </div>`;
+  }).join('');
+  $('tracked').querySelectorAll('[data-untrack]').forEach(b =>
+    b.onclick = () => api('/api/track/remove', {claim: b.dataset.untrack}));
+  $('tracked').querySelectorAll('[data-recheck]').forEach(b =>
+    b.onclick = () => { b.disabled = true; b.textContent = '…';
+                        api('/api/track/recheck', {claim: b.dataset.recheck}); });
+}
+
+api('/api/tracked');                      // restore this session's watchlist on load
+
+// ── MCP connect panel ─────────────────────────────────────────────────────────
+fetch(BASE + 'api/mcpinfo').then(r => r.json()).then(d => {
+  // derive from where the page is actually served, so the snippets stay correct
+  // behind a proxy / on data.recommend.studio — not the server's own idea of its host
+  d.url = location.origin + BASE + 'mcp';
+  $('mcp-url').textContent = d.url;
+  $('mcp-key').textContent = d.key;
+  $('mcp-tool').textContent = d.tool;
+  $('mcp-cli').textContent =
+    `claude mcp add --transport http rcmnd-verify ${d.url} \\\n` +
+    `  --header "Authorization: Bearer ${d.key}"`;
+  $('mcp-json').textContent = JSON.stringify({
+    mcpServers: {
+      "rcmnd-verify": { type: "http", url: d.url,
+                        headers: { Authorization: "Bearer " + d.key } }
+    }
+  }, null, 2);
+}).catch(() => { $('mcp-url').textContent = 'server offline'; });
+
+function stop() {
+  if (es) es.close();
+  clearInterval(tick);
+  $('go').disabled = false; $('go').textContent = 'Check claim';
+}
+
+</script></body></html>

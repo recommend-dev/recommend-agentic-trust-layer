@@ -1,0 +1,4 @@
+requests>=2.31
+# Only needed for the Vertex AI auth path (service account). The GEMINI_API_KEY
+# path is pure stdlib — you can skip this if you use an AI Studio key.
+google-auth>=2.23

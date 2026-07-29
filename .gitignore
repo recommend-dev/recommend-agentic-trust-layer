@@ -1,0 +1,18 @@
+# credentials — never commit these
+.env
+.env.*
+!.env.example
+keys.json
+*credential*.json
+*service-account*.json
+*.pem
+*.key
+*.p12
+
+# runtime state
+data/
+__pycache__/
+*.pyc
+
+# node (tests)
+node_modules/
