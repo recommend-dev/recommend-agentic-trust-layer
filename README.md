@@ -2,6 +2,8 @@
 
 **A claim goes in. A truth score 0–100 and a *separate, honest* confidence come out — with the sources and the reasoning, not just a verdict.**
 
+![Confidence Check demo — a myth goes in, REFUTED comes out with 86% confidence](assets/hero.gif)
+
 Ask any LLM "how sure are you?" and it says ~95–100% on almost everything, including its
 mistakes. The product is not the answer — anyone can produce an answer. The product is
 **what the answer is worth**. Nothing here is answered from model memory: every judgement is
