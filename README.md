@@ -1,8 +1,12 @@
-# Confidence Check
+# Recommend Agentic Trust Layer
 
 **A claim goes in. A truth score 0–100 and a *separate, honest* confidence come out — with the sources and the reasoning, not just a verdict.**
 
-![Confidence Check demo — a myth goes in, REFUTED comes out with 86% confidence](assets/hero.gif)
+The agentic trust layer for your AI stack: a deterministic verification pipeline your
+agents call before they act on something. Not another agent — the thing that tells your
+agents what's true.
+
+![Demo — a myth goes in, REFUTED comes out with 86% confidence](assets/hero.gif)
 
 Ask any LLM "how sure are you?" and it says ~95–100% on almost everything, including its
 mistakes. The product is not the answer — anyone can produce an answer. The product is
@@ -23,7 +27,8 @@ No framework, no build step: one Python stdlib server (`server.py`), one HTML fi
 ## Quickstart
 
 ```bash
-git clone <this-repo> && cd confidence-check
+git clone https://github.com/recommend-dev/recommend-agentic-trust-layer.git
+cd recommend-agentic-trust-layer
 pip install -r requirements.txt        # just `requests` (+ google-auth for the Vertex path)
 cp .env.example .env                   # add GEMINI_API_KEY + EXA_API_KEY — that's the minimum
 python3 server.py                      # → http://localhost:8899
@@ -90,7 +95,7 @@ POST `/mcp`), gated on a bearer key. A demo key is auto-generated into `keys.jso
 run and printed at startup (and shown in the UI on localhost).
 
 ```bash
-claude mcp add --transport http confidence-check \
+claude mcp add --transport http recommend-trust \
   http://localhost:8899/mcp \
   --header "Authorization: Bearer <key from startup output>"
 ```
@@ -130,6 +135,17 @@ under any path prefix in production — don't reintroduce absolute `/api/...` pa
 proxy buffers responses (Caddy, nginx), disable buffering for this route
 (Caddy: `flush_interval -1`) or SSE will never stream. Set `HOST=0.0.0.0` to listen beyond
 localhost.
+
+## Roadmap
+
+- **OKF integration.** Google's [Open Knowledge Format v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf)
+  just standardized `generated_by` / `verified_by` / trust-tier fields for agent-written
+  knowledge — slots for a verdict, with no machine to produce one. We're building the
+  verifier that fills them: walk an OKF bundle, fact-check each concept's load-bearing
+  claims, stamp the result with evidence and a calibrated confidence instead of a
+  self-reported signature.
+- **Pluggable lanes.** Add your own evidence lane (Brave Search, internal corpus, …)
+  without touching the pipeline.
 
 ## License
 
