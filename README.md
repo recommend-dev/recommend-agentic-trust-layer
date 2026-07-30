@@ -136,16 +136,77 @@ proxy buffers responses (Caddy, nginx), disable buffering for this route
 (Caddy: `flush_interval -1`) or SSE will never stream. Set `HOST=0.0.0.0` to listen beyond
 localhost.
 
+## Verify a knowledge base (OKF) — two directions
+
+Google's [Open Knowledge Format v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf)
+records who *generated* agent-written knowledge and who *verified* it — but "verified"
+is a name typed into a field. A signature, not a check, and any agent can type it.
+This repo ships the machine behind the field, in **two complementary directions**:
+
+### 1. External — world truth (`okf_verify.py`)
+
+*"Is this claim actually true out there?"* Extracts each concept's externally
+checkable claims and runs them through the full pipeline — live evidence lanes,
+grounded judge, adversarial challenge, calibrated confidence.
+
+```bash
+python3 okf_verify.py examples/okf-demo        # --dry to judge without writing
+```
+
+Three honest outcomes, all shown in `examples/okf-demo`:
+
+| Concept | What happened |
+|---|---|
+| `market/croatia-context.md` | Both claims SUPPORTED 100/100 → **stamped**, with ECB/EU sources |
+| `market/kids-snacks-positioning.md` | "Sugar causes hyperactivity" REFUTED 9/100 → **not stamped**, failure logged with the refuting studies (DOIs) |
+| `metrics/activation.md` | Internal definition, nothing the web can settle → **not stamped** |
+
+### 2. Internal — citation integrity (`okf_adapter.py`)
+
+*"Does the source this document CITES actually state this?"* No web search at all:
+the evidence is the bundle's own declared `sources` — bundle-relative files read
+directly, external URLs fetched full-text. This is the mode for **internal knowledge
+bases**, where the web has no opinion: policies, metric definitions, schema docs.
+
+```bash
+python3 okf_adapter.py path/to/bundle          # --dry · reports in <bundle>-reports/
+```
+
+Per-claim verdicts: `supports` · `contradicts` · `related-only` · `no-evidence` ·
+`unverifiable` (unreachable source). A claim can be perfectly *true* and still fail
+here — true-but-miscited is an attribution failure, caught by an explicit
+"does the cited source state this?" check. Reasons outrank labels: a `supports`
+whose own reasoning denies support is downgraded mechanically. Output: a per-concept
+report plus a diff table (claims checked · survived · caught · reason), and only
+concepts where every cited claim survives get the stamp. Needs only a Gemini key —
+in our scale test a 26-concept bundle cost **~$0.02** end to end.
+
+### Both directions
+
+- Stamps are spec-conformant and additive: a `verified: {by: recommend-trust-layer/0.1, …}`
+  event (the *machine-confirmed* trust tier per SPEC §5.3) plus an `x_verification`
+  extension block with per-claim results. Existing frontmatter is never deleted.
+- The gate is the product: **a verifier that stamps everything is a rubber stamp.**
+  Refuted, inconclusive and unverifiable concepts stay unstamped, with the reasons
+  written down.
+- Deprecated concepts and Attested Computations are noted and skipped — deterministic
+  SQL checking is different machinery, and we don't pretend otherwise.
+
+### Upload UI
+
+```bash
+python3 okf_server.py                          # → http://localhost:8898
+```
+
+Drop `.md` concept files, watch claims extracted and evidence lanes land live,
+download the stamped file.
+
 ## Roadmap
 
-- **OKF integration.** Google's [Open Knowledge Format v0.2](https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf)
-  just standardized `generated_by` / `verified_by` / trust-tier fields for agent-written
-  knowledge — slots for a verdict, with no machine to produce one. We're building the
-  verifier that fills them: walk an OKF bundle, fact-check each concept's load-bearing
-  claims, stamp the result with evidence and a calibrated confidence instead of a
-  self-reported signature.
-- **Pluggable lanes.** Add your own evidence lane (Brave Search, internal corpus, …)
-  without touching the pipeline.
+- **Pluggable lanes.** Add your own evidence lane (Brave Search, internal corpus,
+  BigQuery schema checks, …) without touching the pipeline.
+- **Continuous verification.** Re-run on a schedule and on every bundle change;
+  pair with `stale_after` so verification ages honestly.
 
 ## License
 

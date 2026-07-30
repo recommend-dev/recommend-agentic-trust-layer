@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Recommend — OKF Verifier</title>
+<style>
+ :root{--ink:#0c0c0e;--body:#333;--grey:#767680;--faint:#a5a5ad;--line:#e7e7ea;--panel:#f7f7f8;
+       --accent:#4f46e5;--soft:#eef2ff;--good:#0e9f6e;--goodsoft:#e6f7f0;--warn:#b7791f;
+       --warnsoft:#fdf3e2;--bad:#c53030;--badsoft:#fdecea}
+ *{box-sizing:border-box}
+ body{margin:0;font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:#fff}
+ .wrap{max-width:820px;margin:0 auto;padding:0 22px 80px}
+ header{border-bottom:1px solid var(--line);padding:14px 0;margin-bottom:34px}
+ header .top{max-width:820px;margin:0 auto;padding:0 22px;display:flex;align-items:center;gap:12px}
+ .brand{font-weight:800;letter-spacing:-.02em;font-size:19px}
+ .doctype{color:var(--faint);font-size:12.5px;margin-left:auto}
+ h1{font-size:34px;line-height:1.15;letter-spacing:-.025em;margin:0 0 10px}
+ h1 .g{color:var(--accent)}
+ .lead{color:var(--body);font-size:15.5px;margin:0 0 26px}
+ .drop{border:2px dashed var(--line);border-radius:14px;padding:34px;text-align:center;color:var(--grey);
+       cursor:pointer;transition:.15s;background:var(--panel)}
+ .drop:hover,.drop.over{border-color:var(--accent);background:var(--soft);color:var(--accent)}
+ .drop b{color:var(--ink)}
+ .drop.over b{color:var(--accent)}
+ .row{display:flex;align-items:center;gap:14px;margin:14px 0 30px}
+ button.go{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:12px 26px;
+       font:inherit;font-weight:700;font-size:15px;cursor:pointer}
+ button.go:disabled{background:#c7c8d6;cursor:default}
+ .chk{font-size:13.5px;color:var(--body);display:flex;gap:7px;align-items:center}
+ .hint{color:var(--faint);font-size:12.5px;margin-left:auto}
+ .file{border:1px solid var(--line);border-radius:14px;margin-bottom:18px;overflow:hidden}
+ .fhead{display:flex;align-items:center;gap:10px;padding:13px 16px;background:var(--panel);border-bottom:1px solid var(--line)}
+ .fname{font-weight:700;font-size:14.5px}
+ .badge{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;border-radius:20px;padding:3px 11px;margin-left:auto}
+ .b-wait{background:#ececf1;color:var(--grey)}
+ .b-verified{background:var(--goodsoft);color:var(--good)}
+ .b-failed{background:var(--badsoft);color:var(--bad)}
+ .b-inconclusive{background:var(--warnsoft);color:var(--warn)}
+ .b-skipped{background:#ececf1;color:var(--grey)}
+ .fbody{padding:6px 16px 14px}
+ .note{color:var(--grey);font-size:13.5px;padding:8px 0}
+ .claim{border-top:1px dashed var(--line);padding:12px 0}
+ .claim:first-child{border-top:0}
+ .ctext{font-size:14px;color:var(--ink);margin-bottom:8px}
+ .ctext .q{color:var(--faint)}
+ .lanes{display:flex;flex-wrap:wrap;gap:6px;min-height:24px}
+ .lane{font-size:11.5px;border:1px solid var(--line);border-radius:6px;padding:2px 9px;color:var(--grey);background:#fff}
+ .lane.on{border-color:var(--accent);color:var(--accent);background:var(--soft)}
+ .lane.ref{border-color:#f2d3d0;color:var(--bad);background:var(--badsoft)}
+ .lane.sup{border-color:#cdeee0;color:var(--good);background:var(--goodsoft)}
+ .lane.err{opacity:.45;text-decoration:line-through}
+ .cver{display:flex;align-items:center;gap:12px;margin-top:9px;font-size:13px}
+ .score{font-weight:800;font-size:16px}
+ .conf{color:var(--grey)}
+ .srcs{margin-top:6px;font-size:12px}
+ .srcs a{color:var(--accent);text-decoration:none;margin-right:12px}
+ .dl{margin:10px 0 2px}
+ .dl button{background:#fff;border:1.5px solid var(--accent);color:var(--accent);border-radius:9px;
+       padding:7px 16px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+ .spin{display:inline-block;width:11px;height:11px;border:2px solid var(--line);border-top-color:var(--accent);
+       border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px}
+ @keyframes sp{to{transform:rotate(360deg)}}
+ .foot{color:var(--faint);font-size:12.5px;border-top:1px solid var(--line);padding-top:22px;margin-top:40px}
+ .hidden{display:none!important}
+</style></head><body>
+<header><div class="top">
+ <span class="brand">recommend</span>
+ <span class="doctype">OKF verifier · internal preview</span>
+</div></header>
+
+<div class="wrap">
+ <h1>Agent wrote your knowledge base.<br/>We tell you <span class="g">which files deserve the stamp.</span></h1>
+ <p class="lead">Drop OKF concept files (<code>.md</code> with YAML frontmatter). We extract every externally
+  checkable claim, run each through the trust pipeline — independent evidence lanes, grounded judge,
+  adversarial challenge — and stamp <code>verified: recommend-trust-layer</code> <b>only when the evidence holds</b>.
+  Refuted or unverifiable files are honestly left unstamped.</p>
+
+ <div class="drop" id="drop">
+  <b>Drop .md files here</b> or click to choose<br/>
+  <span style="font-size:13px">e.g. a concept from an OKF bundle — try Google's own samples</span>
+  <input type="file" id="pick" accept=".md,text/markdown" multiple style="display:none"/>
+ </div>
+ <div class="row">
+  <button class="go" id="go" disabled>Verify files</button>
+  <label class="chk"><input type="checkbox" id="deep"/> include deep-research lane (slower)</label>
+  <span class="hint" id="picked"></span>
+ </div>
+
+ <div id="out"></div>
+
+ <p class="foot">Files are read in your browser and sent only to this local server. Verification runs the same
+  pipeline as the <a href="http://localhost:8899" style="color:var(--accent)">Claim Checker</a>; stamps follow
+  the OKF v0.2 spec (<code>verified</code> event + <code>x_verification</code> extension block).</p>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>(s||"").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let FILES=[];   // {name, content}
+
+function setFiles(list){
+  FILES=list;
+  $('picked').textContent = list.length ? list.map(f=>f.name).join('  ·  ') : '';
+  $('go').disabled = !list.length;
+}
+function readAll(fileList){
+  const mds=[...fileList].filter(f=>f.name.endsWith('.md'));
+  Promise.all(mds.map(f=>f.text().then(t=>({name:f.name,content:t})))).then(setFiles);
+}
+$('drop').onclick=()=>$('pick').click();
+$('pick').onchange=e=>readAll(e.target.files);
+$('drop').ondragover=e=>{e.preventDefault();$('drop').classList.add('over');};
+$('drop').ondragleave=()=>$('drop').classList.remove('over');
+$('drop').ondrop=e=>{e.preventDefault();$('drop').classList.remove('over');readAll(e.dataTransfer.files);};
+
+const cards={};   // name -> {el, claims:{i:{el,lanes:{}}}}
+function fileCard(name,title){
+  const el=document.createElement('div'); el.className='file';
+  el.innerHTML=`<div class="fhead"><span class="spin"></span><span class="fname">${esc(title||name)}</span>
+    <span class="badge b-wait">checking</span></div><div class="fbody"></div>`;
+  $('out').appendChild(el); cards[name]={el,claims:{}};
+}
+function setBadge(name,outcome,label){
+  const b=cards[name].el.querySelector('.badge'), s=cards[name].el.querySelector('.spin');
+  if(s) s.remove();
+  b.className='badge b-'+outcome; b.textContent=label||outcome;
+}
+function claimRow(name,i,text){
+  const body=cards[name].el.querySelector('.fbody');
+  const el=document.createElement('div'); el.className='claim';
+  el.innerHTML=`<div class="ctext"><span class="q">claim:</span> ${esc(text)}</div>
+    <div class="lanes"></div><div class="cver hidden"></div><div class="srcs"></div>`;
+  body.appendChild(el); cards[name].claims[i]={el,lanes:{}};
+}
+
+$('go').onclick=async()=>{
+  $('go').disabled=true; $('out').innerHTML='';
+  for(const k in cards) delete cards[k];
+  const r=await fetch('api/verify',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({files:FILES,deep:$('deep').checked})});
+  const {job}=await r.json();
+  const es=new EventSource('api/stream?job='+job);
+  const on=(ev,fn)=>es.addEventListener(ev,e=>fn(JSON.parse(e.data)));
+
+  on('file_start',d=>fileCard(d.name,d.title));
+  on('claims',d=>{ if(!d.claims.length) return;
+    d.claims.forEach((c,i)=>claimRow(d.name,i,c)); });
+  on('claim_lanes',d=>{ const cl=cards[d.name].claims[d.i]; if(!cl) return;
+    const box=cl.el.querySelector('.lanes');
+    d.lanes.forEach(l=>{ const s=document.createElement('span'); s.className='lane'; s.dataset.id=l.id;
+      s.textContent=l.name; box.appendChild(s); cl.lanes[l.id]=s; }); });
+  on('claim_lane',d=>{ const cl=cards[d.name].claims[d.i]; if(!cl) return;
+    const s=cl.lanes[d.id||d.lane]; if(!s) return;
+    if(d.error){ s.classList.add('err'); s.title=d.error; return; }
+    s.classList.add(d.stance==='refute'?'ref':d.stance==='support'?'sup':'on'); });
+  on('claim_verdict',d=>{ const cl=cards[d.name].claims[d.i]; if(!cl) return;
+    const v=cl.el.querySelector('.cver'); v.classList.remove('hidden');
+    const tone=d.verdict==='supported'?'var(--good)':d.verdict==='refuted'?'var(--bad)':'var(--warn)';
+    v.innerHTML=`<span class="score" style="color:${tone}">${d.score??'—'}<small style="font-size:11px;color:var(--faint)">/100</small></span>
+      <span style="font-weight:700;color:${tone}">${esc(d.label||'')}</span>
+      <span class="conf">confidence ${Math.round((d.confidence||0)*100)}%</span>`;
+    cl.el.querySelector('.srcs').innerHTML=(d.sources||[]).map(u=>{
+      const dom=u.split('//').pop().split('/')[0].replace('www.','');
+      return `<a href="${esc(u)}" target="_blank">${esc(dom)} ↗</a>`;}).join(''); });
+  on('file_done',d=>{
+    const labels={verified:'✓ verified — stamped',failed:'✗ refuted — not stamped',
+                  inconclusive:'inconclusive — not stamped',skipped:'nothing checkable'};
+    setBadge(d.name,d.outcome,labels[d.outcome]);
+    const body=cards[d.name].el.querySelector('.fbody');
+    if(d.note){ const n=document.createElement('div'); n.className='note'; n.textContent=d.note; body.appendChild(n); }
+    if(d.stamped){ const w=document.createElement('div'); w.className='dl';
+      const b=document.createElement('button');
+      b.textContent='Download '+(d.outcome==='verified'?'stamped':'annotated')+' .md';
+      b.onclick=()=>{ const a=document.createElement('a');
+        a.href=URL.createObjectURL(new Blob([d.stamped],{type:'text/markdown'}));
+        a.download=d.name.replace(/\.md$/,'')+'.verified.md'; a.click(); };
+      w.appendChild(b); body.appendChild(w); } });
+  on('error',d=>{ const n=document.createElement('div'); n.className='note'; n.style.color='var(--bad)';
+    n.textContent=d.msg; $('out').appendChild(n); });
+  es.addEventListener('done',()=>{ es.close(); $('go').disabled=false; });
+};
+</script>
+</body></html>
