@@ -77,6 +77,14 @@
  .scard .sfiles{font-size:12px}
  .scard .sfiles a{color:var(--accent);text-decoration:none;margin-right:14px;cursor:pointer}
  .scard .sfiles a:hover{text-decoration:underline}
+ .frow{display:flex;gap:8px;align-items:baseline;font-size:12.5px;border-top:1px dashed var(--line);padding:7px 0}
+ .frow a{color:var(--accent);text-decoration:none;white-space:nowrap;cursor:pointer}
+ .frow a:hover{text-decoration:underline}
+ .frow .role{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
+       border-radius:5px;padding:1px 7px;white-space:nowrap}
+ .role.accused{background:var(--soft);color:var(--accent)}
+ .role.evidence{background:#ececf1;color:var(--grey)}
+ .frow .rt{color:var(--grey);line-height:1.5}
  .spin{display:inline-block;width:11px;height:11px;border:2px solid var(--line);border-top-color:var(--accent);
        border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px}
  @keyframes sp{to{transform:rotate(360deg)}}
@@ -175,16 +183,32 @@ function dlFile(name, content){
   a.href=URL.createObjectURL(new Blob([content],{type:'text/markdown'}));
   a.download=name.split('/').pop(); a.click();
 }
+// who is who: per file, is it the thing ON TRIAL or the EVIDENCE it is judged against
+const ROLES={
+  croatia:[{role:"on trial",cls:"accused",text:"the agent's note whose claims get judged — the evidence here is the live web."}],
+  myth:[{role:"on trial",cls:"accused",text:"the agent's draft whose claims get judged — the evidence here is the live web (real studies)."}],
+  bundle:[
+    {role:"on trial",cls:"accused",text:"agent-written table docs, full of claims that cite the policy (“net_amount = gross − discount, per policy”, “revenue recognized at delivered + 30 days, per policy”). Every cited claim is judged."},
+    {role:"evidence",cls:"evidence",text:"the policy those claims cite. It is NOT verified itself — it is what the claims are judged against, so it will finish as “skipped — no claims”."}],
+  poison:[
+    {role:"on trial",cls:"accused",text:"same table docs, but with planted errors in the claims — watch them get caught one by one."},
+    {role:"evidence",cls:"evidence",text:"the cited policy (with its currency rule silently altered — so a previously-true claim now contradicts it). Still evidence, still not verified itself."}],
+};
 function renderSamples(){
   const box=$('samples'); box.innerHTML='';
   Object.entries(SAMPLES).filter(([k,s])=>s.mode===MODE).forEach(([k,s])=>{
     const el=document.createElement('div'); el.className='scard';
+    const rows=s.files.map((f,i)=>{
+      const r=(ROLES[k]||[])[i]||{};
+      return `<div class="frow"><a data-i="${i}">⬇ ${esc(f.name)}</a>
+        ${r.role?`<span class="role ${r.cls}">${esc(r.role)}</span>`:''}
+        <span class="rt">${esc(r.text||'')}</span></div>`;
+    }).join('');
     el.innerHTML=`<div class="sh"><span class="st">${esc(s.label)}</span>
         <button class="load">Load sample →</button></div>
-      <div class="sd">${esc(DESCS[k]||'')}</div>
-      <div class="sfiles">${s.files.map((f,i)=>`<a data-i="${i}">⬇ ${esc(f.name)}</a>`).join('')}</div>`;
+      <div class="sd">${esc(DESCS[k]||'')}</div>${rows}`;
     el.querySelector('.load').onclick=()=>setFiles(s.files);
-    el.querySelectorAll('.sfiles a').forEach(a=>a.onclick=()=>dlFile(s.files[+a.dataset.i].name, s.files[+a.dataset.i].content));
+    el.querySelectorAll('.frow a').forEach(a=>a.onclick=()=>dlFile(s.files[+a.dataset.i].name, s.files[+a.dataset.i].content));
     box.appendChild(el);
   });
 }
