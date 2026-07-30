@@ -22,7 +22,8 @@ sys.path.insert(0, HERE)
 
 import okf_verify                                 # noqa: E402
 
-PORT = int(os.environ.get("OKF_PORT", 8898))
+# PORT is what Cloud Run (and most container hosts) inject; OKF_PORT wins locally
+PORT = int(os.environ.get("PORT", os.environ.get("OKF_PORT", 8898)))
 
 # jobs live in memory: one browser, one machine, a demo — not a queue service
 JOBS = {}

@@ -1,0 +1,11 @@
+.git
+.env
+.env.*
+keys.json
+data/
+okf-playground/
+node_modules/
+tests/node_modules/
+__pycache__/
+*.pyc
+assets/
