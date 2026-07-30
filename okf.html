@@ -57,6 +57,17 @@
  .dl{margin:10px 0 2px}
  .dl button{background:#fff;border:1.5px solid var(--accent);color:var(--accent);border-radius:9px;
        padding:7px 16px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+ .modesw{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:4px;gap:3px;margin:0 0 18px}
+ .mseg{background:none;border:0;border-radius:8px;padding:9px 20px;font:inherit;font-size:13.5px;font-weight:700;color:var(--grey);cursor:pointer;text-align:left}
+ .mseg small{display:block;font-weight:500;font-size:11.5px;color:var(--faint)}
+ .mseg.on{background:#fff;color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+ .mseg.on small{color:var(--grey)}
+ .vchip{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;border-radius:6px;padding:2px 9px;margin-right:8px}
+ .v-supports{background:var(--goodsoft);color:var(--good)}
+ .v-contradicts{background:var(--badsoft);color:var(--bad)}
+ .v-related-only,.v-no-evidence{background:var(--warnsoft);color:var(--warn)}
+ .v-unverifiable{background:#ececf1;color:var(--grey)}
+ .crsn{font-size:12.5px;color:var(--grey);margin-top:5px;line-height:1.5}
  .spin{display:inline-block;width:11px;height:11px;border:2px solid var(--line);border-top-color:var(--accent);
        border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px}
  @keyframes sp{to{transform:rotate(360deg)}}
@@ -70,14 +81,18 @@
 
 <div class="wrap">
  <h1>Agent wrote your knowledge base.<br/>We tell you <span class="g">which files deserve the stamp.</span></h1>
- <p class="lead">Drop OKF concept files (<code>.md</code> with YAML frontmatter). We extract every externally
-  checkable claim, run each through the trust pipeline — independent evidence lanes, grounded judge,
-  adversarial challenge — and stamp <code>verified: recommend-trust-layer</code> <b>only when the evidence holds</b>.
-  Refuted or unverifiable files are honestly left unstamped.</p>
+ <p class="lead">Drop OKF concept files (<code>.md</code> with YAML frontmatter). Every checkable claim runs
+  through the trust pipeline, and <code>verified: recommend-trust-layer</code> is stamped
+  <b>only when the evidence holds</b>. Refuted or unverifiable files are honestly left unstamped.</p>
+
+ <div class="modesw" id="modesw">
+  <button class="mseg on" data-mode="web">Against the live web<small>external — is this claim actually true?</small></button>
+  <button class="mseg" data-mode="internal">Against the bundle's own sources<small>internal — does the cited source really state this?</small></button>
+ </div>
 
  <div class="drop" id="drop">
-  <b>Drop .md files here</b> or click to choose<br/>
-  <span style="font-size:13px">e.g. a concept from an OKF bundle — try Google's own samples</span>
+  <b id="drophead">Drop .md files here</b> or click to choose<br/>
+  <span style="font-size:13px" id="drophint">e.g. a concept from an OKF bundle — try Google's own samples</span>
   <input type="file" id="pick" accept=".md,text/markdown" multiple style="display:none"/>
  </div>
  <div class="row">
@@ -88,30 +103,59 @@
 
  <div id="out"></div>
 
- <p class="foot">Files are read in your browser and sent only to this local server. Verification runs the same
-  pipeline as the <a href="http://localhost:8899" style="color:var(--accent)">Claim Checker</a>; stamps follow
-  the OKF v0.2 spec (<code>verified</code> event + <code>x_verification</code> extension block).</p>
+ <p class="foot">Files are processed in memory and never stored on the server. Verification runs the same
+  pipeline as the <a href="https://data.recommend.studio/static/rcmnd-confidence-check/" style="color:var(--accent)">Claim&nbsp;Checker</a>;
+  stamps follow the <a href="https://github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf" style="color:var(--accent)">OKF v0.2 spec</a>
+  (<code>verified</code> event + <code>x_verification</code> extension block). Source:
+  <a href="https://github.com/recommend-dev/recommend-agentic-trust-layer" style="color:var(--accent)">recommend-dev/recommend-agentic-trust-layer</a>.</p>
 </div>
 
 <script>
 const $=id=>document.getElementById(id);
 const esc=s=>(s||"").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-let FILES=[];   // {name, content}
+let FILES=[];   // {name, content} — name keeps the relative path when a folder is dropped
+let MODE='web';
+
+document.querySelectorAll('.mseg').forEach(b=>b.onclick=()=>{
+  MODE=b.dataset.mode;
+  document.querySelectorAll('.mseg').forEach(x=>x.classList.toggle('on',x===b));
+  $('deep').parentElement.style.display = MODE==='web' ? '' : 'none';
+  $('drophead').textContent = MODE==='web' ? 'Drop .md files here' : 'Drop a bundle folder or .md files here';
+  $('drophint').textContent = MODE==='web'
+    ? "e.g. a concept from an OKF bundle — try Google's own samples"
+    : 'concepts + the source files they cite (folder drop keeps the paths intact)';
+});
 
 function setFiles(list){
   FILES=list;
   $('picked').textContent = list.length ? list.map(f=>f.name).join('  ·  ') : '';
   $('go').disabled = !list.length;
 }
-function readAll(fileList){
-  const mds=[...fileList].filter(f=>f.name.endsWith('.md'));
-  Promise.all(mds.map(f=>f.text().then(t=>({name:f.name,content:t})))).then(setFiles);
+function fileName(f){ return (f.webkitRelativePath||f.fullPath||f.name).replace(/^\//,''); }
+function readAll(files){
+  const mds=[...files].filter(f=>f.name.endsWith('.md'));
+  Promise.all(mds.map(f=>f.text().then(t=>({name:fileName(f),content:t})))).then(setFiles);
+}
+// folder-aware drop: walk directory entries so bundle-relative source paths survive
+function walkEntry(entry, out){
+  return new Promise(res=>{
+    if(entry.isFile) entry.file(f=>{ f.fullPath=entry.fullPath; out.push(f); res(); });
+    else if(entry.isDirectory){ const r=entry.createReader();
+      r.readEntries(es=>Promise.all(es.map(e=>walkEntry(e,out))).then(res)); }
+    else res();
+  });
 }
 $('drop').onclick=()=>$('pick').click();
 $('pick').onchange=e=>readAll(e.target.files);
 $('drop').ondragover=e=>{e.preventDefault();$('drop').classList.add('over');};
 $('drop').ondragleave=()=>$('drop').classList.remove('over');
-$('drop').ondrop=e=>{e.preventDefault();$('drop').classList.remove('over');readAll(e.dataTransfer.files);};
+$('drop').ondrop=e=>{
+  e.preventDefault(); $('drop').classList.remove('over');
+  const items=[...(e.dataTransfer.items||[])].map(i=>i.webkitGetAsEntry&&i.webkitGetAsEntry()).filter(Boolean);
+  if(items.length){ const out=[];
+    Promise.all(items.map(en=>walkEntry(en,out))).then(()=>readAll(out));
+  } else readAll(e.dataTransfer.files);
+};
 
 const cards={};   // name -> {el, claims:{i:{el,lanes:{}}}}
 function fileCard(name,title){
@@ -137,7 +181,7 @@ $('go').onclick=async()=>{
   $('go').disabled=true; $('out').innerHTML='';
   for(const k in cards) delete cards[k];
   const r=await fetch('api/verify',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({files:FILES,deep:$('deep').checked})});
+    body:JSON.stringify({files:FILES,deep:$('deep').checked,mode:MODE})});
   const {job}=await r.json();
   const es=new EventSource('api/stream?job='+job);
   const on=(ev,fn)=>es.addEventListener(ev,e=>fn(JSON.parse(e.data)));
@@ -153,6 +197,14 @@ $('go').onclick=async()=>{
     const s=cl.lanes[d.id||d.lane]; if(!s) return;
     if(d.error){ s.classList.add('err'); s.title=d.error; return; }
     s.classList.add(d.stance==='refute'?'ref':d.stance==='support'?'sup':'on'); });
+  // internal mode: one row per (claim × cited source), verdict chip + written reason
+  on('cite_row',d=>{ const card=cards[d.name]; if(!card) return;
+    const body=card.el.querySelector('.fbody');
+    const el=document.createElement('div'); el.className='claim';
+    el.innerHTML=`<div class="ctext"><span class="vchip v-${esc(d.verdict)}">${esc(d.verdict)}</span>
+      <span class="q">[^${esc(d.src)}]</span> ${esc(d.claim)}</div>
+      <div class="crsn">${esc(d.reason||'')}</div>`;
+    body.appendChild(el); });
   on('claim_verdict',d=>{ const cl=cards[d.name].claims[d.i]; if(!cl) return;
     const v=cl.el.querySelector('.cver'); v.classList.remove('hidden');
     const tone=d.verdict==='supported'?'var(--good)':d.verdict==='refuted'?'var(--bad)':'var(--warn)';
@@ -163,7 +215,8 @@ $('go').onclick=async()=>{
       const dom=u.split('//').pop().split('/')[0].replace('www.','');
       return `<a href="${esc(u)}" target="_blank">${esc(dom)} ↗</a>`;}).join(''); });
   on('file_done',d=>{
-    const labels={verified:'✓ verified — stamped',failed:'✗ refuted — not stamped',
+    const labels={verified:'✓ verified — stamped',
+                  failed: MODE==='web' ? '✗ refuted — not stamped' : '✗ contradiction — not stamped',
                   inconclusive:'inconclusive — not stamped',skipped:'nothing checkable'};
     setBadge(d.name,d.outcome,labels[d.outcome]);
     const body=cards[d.name].el.querySelector('.fbody');

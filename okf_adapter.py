@@ -109,6 +109,12 @@ def resolve_source(entry, bundle, cache):
     text = None
     if res and not res.startswith(("http://", "https://")):
         p = os.path.join(bundle, res)
+        if not os.path.exists(p):
+            # flat uploads lose directory structure ("policies/x.md" arrives as "x.md") —
+            # fall back to a unique basename match anywhere in the bundle
+            hits = [os.path.join(r, f) for r, _d, fs in os.walk(bundle)
+                    for f in fs if f == os.path.basename(res)]
+            p = hits[0] if len(hits) == 1 else p
         if os.path.exists(p):
             raw = open(p, encoding="utf-8").read()
             _fm, body = okf_verify.split_frontmatter(raw)

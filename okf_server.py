@@ -12,7 +12,9 @@ import json
 import os
 import queue
 import secrets
+import shutil
 import sys
+import tempfile
 import threading
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -20,6 +22,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
+import okf_adapter                                # noqa: E402
 import okf_verify                                 # noqa: E402
 
 # PORT is what Cloud Run (and most container hosts) inject; OKF_PORT wins locally
@@ -104,6 +107,49 @@ def run_job(job, files, deep):
         job.emit("done", {})
 
 
+def run_internal_job(job, files):
+    """Citation-integrity mode: the uploaded files ARE the bundle. Claims are judged
+    against the sources the files themselves cite — no web search at all. Files are
+    written to a throwaway temp dir (so bundle-relative `resource:` paths resolve)
+    and deleted the moment the job ends."""
+    tmp = tempfile.mkdtemp(prefix="okf-bundle-")
+    try:
+        rels = []
+        for f in files:
+            rel = (f.get("name") or "concept.md").replace("\\", "/")
+            parts = [p for p in rel.split("/") if p not in ("", ".", "..")]
+            if not parts:
+                continue
+            rel = "/".join(parts)
+            p = os.path.join(tmp, rel)
+            os.makedirs(os.path.dirname(p) or tmp, exist_ok=True)
+            open(p, "w", encoding="utf-8").write(f.get("content") or "")
+            if rel.endswith(".md") and os.path.basename(rel) not in okf_verify.SKIP_FILES:
+                rels.append(rel)
+        cache = {}
+        for rel in rels:
+            p = os.path.join(tmp, rel)
+            fm, _b = okf_verify.split_frontmatter(open(p, encoding="utf-8").read())
+            title = (okf_verify.fm_get(fm, "title") if fm else None) or rel
+            job.emit("file_start", {"name": rel, "title": title})
+
+            def on_row(_r, row, _n=rel):
+                job.emit("cite_row", {"name": _n, **row})
+
+            c = okf_adapter.process_concept(p, tmp, cache, on_row=on_row)
+            out = {"name": rel, "outcome": c["outcome"], "note": c.get("note") or ""}
+            if c["outcome"] == "verified":
+                out["stamped"] = (f"---\n{okf_adapter.stamp(c['fm'], okf_verify.now_iso()).rstrip()}"
+                                  f"\n---\n{c['body']}")
+            job.emit("file_done", out)
+        job.emit("done", {})
+    except Exception as e:
+        job.emit("error", {"msg": f"{type(e).__name__}: {e}"[:300]})
+        job.emit("done", {})
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *a):
         pass
@@ -172,8 +218,11 @@ class Handler(BaseHTTPRequestHandler):
             job_id = secrets.token_urlsafe(8)
             with _jobs_lock:
                 JOBS[job_id] = job
-            threading.Thread(target=run_job, args=(job, files, bool(d.get("deep"))),
-                             daemon=True).start()
+            if d.get("mode") == "internal":
+                target, args = run_internal_job, (job, files)
+            else:
+                target, args = run_job, (job, files, bool(d.get("deep")))
+            threading.Thread(target=target, args=args, daemon=True).start()
             self._json(200, {"job": job_id})
             return
         self.send_error(404)
